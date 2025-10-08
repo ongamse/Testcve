@@ -61,15 +61,12 @@ jobs:
           Write-Host "Using: $((Get-Content $env:GITHUB_OUTPUT) -join '')"
 
       # Build best-effort so SAST can still run on source even if restore fails
-      - name: Restore & Build (best-effort)
-        continue-on-error: true
+      - name: Restore & Build (skip Telerik restore)
         run: |
-          $proj = "${{ steps.findcsproj.outputs.target_csproj }}"
-          msbuild "$proj" /t:Restore /p:Configuration=Release /m /v:m
-          msbuild "$proj" /t:Build   /p:Configuration=Release /m /v:m
+          msbuild .\VulnerableTelerikDemo.csproj /p:IncludeTelerik=false /p:Restore=false /t:Build /p:Configuration=Release /m /v:m
 
       # Run preZero NextGen Static Analysis against the csproj (SAST) + SCA on referenced packages
       - name: Analyze with preZero NextGen Static Analysis
-        run: .\sl analyze --strict --wait --verbose --app QwietAI-CVE-2019-18935 --tag branch=${{ github.head_ref }} 
+        run: .\sl analyze --strict --wait --verbose --app QwietAI-CVE-2019-18935 --tag branch=${{ github.head_ref }} --csharp VulnerableTelerikDemo.csproj
         env:
           SHIFTLEFT_ACCESS_TOKEN: ${{ secrets.SHIFTLEFT_ACCESS_TOKEN }}
