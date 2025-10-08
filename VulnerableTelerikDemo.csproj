@@ -1,18 +1,22 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
     <Nullable>enable</Nullable>
+    <LangVersion>8.0</LangVersion>
     <AssemblyName>VulnerableTelerikDemo</AssemblyName>
   </PropertyGroup>
 
+  <!-- Only include the Telerik PackageReference when explicitly requested (e.g., local dev).
+       In CI we pass /p:IncludeTelerik=false to avoid private feed restore failures. -->
   <ItemGroup Condition="'$(IncludeTelerik)' == 'true'">
-  <PackageReference Include="Telerik.UI.for.AspNet.Core" Version="2019.3.1023" />
-</ItemGroup>
-<ItemGroup>
-  <None Include="packages.config" />
-  <Compile Include="VulnerableHandler.ashx.cs" />
-  <Compile Include="InsecureDeserialize.cs" />
-</ItemGroup>
+    <PackageReference Include="Telerik.UI.for.AspNet.Core" Version="2019.3.1023" />
+  </ItemGroup>
 
-</ItemGroup>
+  <!-- Make sure scanners see the legacy manifest that maps to CVE-2019-18935 -->
+  <ItemGroup>
+    <None Include="packages.config" />
+    <!-- Optional: explicitly include your C# files; not required if you rely on default globs -->
+    <Compile Include="VulnerableHandler.ashx.cs" />
+    <Compile Include="InsecureDeserialize.cs" />
+  </ItemGroup>
 </Project>
