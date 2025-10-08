@@ -1,0 +1,43 @@
+---
+# This workflow builds the .NET Framework csproj and runs QwietAI preZero
+name: qwiet.ai
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  QwietAI-preZero-NextGen-Static-Analysis:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Optional: You can keep this for dotnet-based tools, but MSBuild will build the net48 project.
+      - name: Setup .NET (SDK)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      # Ensure MSBuild from VS 2022 is on PATH
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Download QwietAI CLI
+        run: |
+          Invoke-WebRequest -Uri 'https://cdn.shiftleft.io/download/sl-latest-windows-x64.zip' -OutFile sl.zip
+          Expand-Archive -Path sl.zip -DestinationPath .
+
+      # If your project is at repo root; adjust path if it's under a folder.
+      # Because Telerik packages are proprietary, restore may fail.
+      # Mark this step best-effort so scans still run on source even if restore fails.
+      - name: Restore & Build (best-effort)
+        continue-on-error: true
+        run: |
+          msbuild .\VulnerableTelerikDemo.csproj /t:Restore /p:Configuration=Release /m
+          msbuild .\VulnerableTelerikDemo.csproj /t:Build   /p:Configuration=Release /m /verbosity:minimal
+
+      # Run preZero NextGen Static Analysis against the csproj (SAST) + SCA on referenced packages
+      - name: Analyze with preZero NextGen Static Analysis
+        run: .\sl analyze --strict --wait --verbose --app QwietAI-CVE-2019-18935 --tag branch=${{ github.head_ref }} .\VulnerableTelerikDemo.csproj
+        env:
+          SHIFTLEFT_ACCESS_TOKEN: ${{ secrets.SHIFTLEFT_ACCESS_TOKEN }}
