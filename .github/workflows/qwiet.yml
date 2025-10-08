@@ -28,7 +28,7 @@ jobs:
 
       - name: Restore packages.config (optional; needs feed access)
         run: |
-            nuget restore .\VulnerableTelerikDemo.sln
+          nuget restore .\VulnerableTelerikDemo.csproj
 
       - name: Download QwietAI CLI
         run: |
