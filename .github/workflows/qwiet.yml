@@ -22,6 +22,14 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      - name: Install NuGet CLI
+        run: |
+          choco install nuget.commandline -y
+
+      - name: Restore packages.config (optional; needs feed access)
+        run: |
+            nuget restore .\VulnerableTelerikDemo.sln
+
       - name: Download QwietAI CLI
         run: |
           Invoke-WebRequest -Uri 'https://cdn.shiftleft.io/download/sl-latest-windows-x64.zip' -OutFile sl.zip
