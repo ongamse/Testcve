@@ -27,17 +27,41 @@ jobs:
           Invoke-WebRequest -Uri 'https://cdn.shiftleft.io/download/sl-latest-windows-x64.zip' -OutFile sl.zip
           Expand-Archive -Path sl.zip -DestinationPath .
 
-      # If your project is at repo root; adjust path if it's under a folder.
-      # Because Telerik packages are proprietary, restore may fail.
-      # Mark this step best-effort so scans still run on source even if restore fails.
+      # Show what’s actually in the repo
+      - name: List important files
+        run: |
+          Write-Host "Repo root contents:"
+          Get-ChildItem -Force
+          Write-Host "`nAll .csproj files:"
+          Get-ChildItem -Recurse -Filter *.csproj | Select-Object FullName
+          Write-Host "`npackages.config files:"
+          Get-ChildItem -Recurse -Filter packages.config | Select-Object FullName
+
+      # Choose your project here if you know it; else auto-pick first csproj
+      - name: Resolve target csproj
+        id: findcsproj
+        shell: pwsh
+        run: |
+          $preferred = "${{ github.workspace }}\VulnerableTelerikDemo.csproj"
+          if (Test-Path $preferred) {
+            "target_csproj=$preferred" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          } else {
+            $proj = Get-ChildItem -Recurse -Filter *.csproj | Select-Object -First 1
+            if (-not $proj) { throw "No .csproj found. Check out paths or add a project." }
+            "target_csproj=$($proj.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          }
+          Write-Host "Using: $((Get-Content $env:GITHUB_OUTPUT) -join '')"
+
+      # Build best-effort so SAST can still run on source even if restore fails
       - name: Restore & Build (best-effort)
         continue-on-error: true
         run: |
-          msbuild .\VulnerableTelerikDemo.csproj /t:Restore /p:Configuration=Release /m
-          msbuild .\VulnerableTelerikDemo.csproj /t:Build   /p:Configuration=Release /m /verbosity:minimal
+          $proj = "${{ steps.findcsproj.outputs.target_csproj }}"
+          msbuild "$proj" /t:Restore /p:Configuration=Release /m /v:m
+          msbuild "$proj" /t:Build   /p:Configuration=Release /m /v:m
 
       # Run preZero NextGen Static Analysis against the csproj (SAST) + SCA on referenced packages
       - name: Analyze with preZero NextGen Static Analysis
-        run: .\sl analyze --strict --wait --verbose --app QwietAI-CVE-2019-18935 --tag branch=${{ github.head_ref }} .\VulnerableTelerikDemo.csproj
+        run: .\sl analyze --strict --wait --verbose --app QwietAI-CVE-2019-18935 --tag branch=${{ github.head_ref }} 
         env:
           SHIFTLEFT_ACCESS_TOKEN: ${{ secrets.SHIFTLEFT_ACCESS_TOKEN }}
