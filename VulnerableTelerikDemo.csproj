@@ -5,10 +5,10 @@
     <AssemblyName>VulnerableTelerikDemo</AssemblyName>
   </PropertyGroup>
 
-  <ItemGroup>
-    <!-- Deliberately reference the affected Telerik package/version to be picked up by SCA -->
-    <!-- NOTE: Telerik.Web.UI may be proprietary; this reference is for SCA fingerprinting only -->
-    <None Include="packages.config" />
-    <PackageReference Include="Telerik.UI.for.AspNet.Core" Version="2019.3.1023" />
-  </ItemGroup>
+  <ItemGroup Condition="'$(IncludeTelerik)' == 'true'">
+  <PackageReference Include="Telerik.UI.for.AspNet.Core" Version="2019.3.1023" />
+</ItemGroup>
+<ItemGroup>
+  <None Include="packages.config" />
+</ItemGroup>
 </Project>
