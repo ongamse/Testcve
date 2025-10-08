@@ -10,5 +10,9 @@
 </ItemGroup>
 <ItemGroup>
   <None Include="packages.config" />
+  <Compile Include="VulnerableHandler.ashx.cs" />
+  <Compile Include="InsecureDeserialize.cs" />
+</ItemGroup>
+
 </ItemGroup>
 </Project>
