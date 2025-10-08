@@ -63,7 +63,7 @@ jobs:
       # Build best-effort so SAST can still run on source even if restore fails
       - name: Restore & Build (skip Telerik restore)
         run: |
-          msbuild .\VulnerableTelerikDemo.csproj /p:IncludeTelerik=false /p:Restore=false /t:Build /p:Configuration=Release /m /v:m
+          msbuild .\VulnerableTelerikDemo.csproj /p:IncludeTelerik=false /p:Restore=false /t:Build /p:Configuration=Release /m /v:m /p:LangVersion=8.0
 
       # Run preZero NextGen Static Analysis against the csproj (SAST) + SCA on referenced packages
       - name: Analyze with preZero NextGen Static Analysis
